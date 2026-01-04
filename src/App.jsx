@@ -99,14 +99,35 @@ function showToast(type, message) {
 
 async function handleSaveQuote(e) {
   e.preventDefault();
+  const MAX_LENGTH = 200;
+  const cleanedText = text.trim();
+  const POST_INTERVAL_MS = 30 * 1000; // 30秒
+  const lastPostAt = localStorage.getItem("lastPostAt"); 
+  const now = Date.now();
+
   if (!posterName) {
     alert("まずは投稿者名を登録してください");
     return;
   }
-  if (!text.trim()) {
+
+  if (cleanedText.length === 0) {
     showToast("error", "名言本文は必須です");
     return;
+    }
+
+  if (cleanedText.length > MAX_LENGTH) {
+    showToast("error", `名言は${MAX_LENGTH}文字以内で入力してください`);
+    return;
   }
+  
+if (lastPostAt && now - Number(lastPostAt) < POST_INTERVAL_MS) {
+  const waitSec = Math.ceil(
+    (POST_INTERVAL_MS - (now - Number(lastPostAt))) / 1000
+  );
+  showToast("error", `あと${waitSec}秒待ってください`);
+  return;
+}
+
 
   setIsSubmitting(true);
   try {
@@ -126,6 +147,8 @@ async function handleSaveQuote(e) {
       showToast("error", "保存に失敗しました");
       return;
     }
+
+    localStorage.setItem("lastPostAt", String(Date.now()));
 
     // フォームクリア & 再読込
 
